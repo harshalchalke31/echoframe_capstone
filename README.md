@@ -83,7 +83,7 @@ To evaluate the trained model on the test set, run:
 
 ```bash
 python src/evaluate.py --model_path checkpoints/best_model.pth --mode test
-
+```
 
 ## Results
 
