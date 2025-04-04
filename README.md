@@ -16,7 +16,7 @@ A schematic showcasing the MobileNetV3-UNet architecture and the LVEF estimation
 ---
 
 ## Directory Structure
-
+```bash
 echoframe_capstone/
 ├── assets/      # Project figures and visualizations
 ├── data/        # Sample data or placeholder path for dataset
@@ -30,7 +30,7 @@ echoframe_capstone/
 ├── results/     # Evaluation outputs and visualizations
 ├── README.md
 └── requirements.txt
-
+```
 
 ---
 
