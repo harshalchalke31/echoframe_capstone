@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 import cv2
 import pandas as pd
+import random
+import torchvision.transforms.functional as TF
 
 class DiceLoss(nn.Module):
     def __init__(self):
@@ -250,11 +252,6 @@ def test_performance(model,test_loader,test_df,device,model_path):
     efs_pred = []
     efs_true = []
 
-    # For classification-based mean average precision:
-    # We'll store one-hot vectors for predicted class and for true class.
-    pred_classes_list = []
-    true_classes_list = []
-
     # Loop over test_loader
     with torch.no_grad():
         for images, masks, file_names in test_loader:
@@ -326,3 +323,52 @@ def test_performance(model,test_loader,test_df,device,model_path):
         print(f"EF Mean Absolute Percentage Error (MAPE): {mape_ef}%")
     else:
         print("No EF data to compute regression metrics.")
+
+def visualize_test_predictions(model,test_loader,device):
+    model.eval()
+    num_batches_to_show = 5
+    total_batches = len(test_loader)
+
+    # Randomly choose 5 unique batch indices
+    batch_indices = random.sample(range(total_batches), num_batches_to_show)
+
+    # Convert test_loader to list for random access
+    test_batches = list(test_loader)
+
+    with torch.no_grad():
+        for batch_count, batch_idx in enumerate(batch_indices, 1):
+            images, masks, file_names = test_batches[batch_idx]
+            images = images.to(device)
+            masks = masks.to(device)
+
+            print(f"\n🔹 Showing Batch {batch_count} (Index: {batch_idx})\n")
+
+            # Model prediction
+            outputs = model(images)
+            preds = (outputs > 0.5).float()
+
+            # Show up to 4 samples from batch
+            num_to_show = min(4, images.size(0))
+            for i in range(num_to_show):
+                img_np = TF.to_pil_image(images[i].cpu())
+                mask_np = TF.to_pil_image(masks[i].cpu().squeeze(0))
+                pred_np = TF.to_pil_image(preds[i].cpu().squeeze(0))
+
+                plt.figure(figsize=(10, 3))
+
+                plt.subplot(1, 3, 1)
+                plt.title("Original Image")
+                plt.imshow(img_np)
+
+                plt.subplot(1, 3, 2)
+                plt.title("Ground Truth Mask")
+                plt.imshow(img_np)
+                plt.imshow(mask_np, alpha=0.4, cmap='Reds')
+
+                plt.subplot(1, 3, 3)
+                plt.title("Predicted Mask")
+                plt.imshow(img_np)
+                plt.imshow(pred_np, alpha=0.4, cmap='Reds')
+
+                plt.tight_layout()
+                plt.show()

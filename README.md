@@ -1,7 +1,8 @@
 # EchoFrame: Lightweight and Accurate LVEF Estimation with Heartbeat Analysis
 **Author:** Harshal Chalke  
 **Course:** Capstone Project  
-**Dataset:** EchoNet-Dynamic by Stanford AIMI
+**Dataset:** [EchoNet-Dynamic by Stanford AIMI](https://stanfordaimi.azurewebsites.net/datasets/834e1cd1-92f7-4268-9daa-d359198b310a)
+
 
 ---
 
@@ -67,21 +68,21 @@ The experimental setup involves a two-stage framework for cardiac function asses
 
 ---
 
-## Baseline Comparison & Results
+##  Results & Baseline Comparison
 
-| **Model**                            | **DSC ↑** | **LVEF MAE ↓** | **Params (M) ↓** | **FLOPs (G) ↓** |
-|-------------------------------------|-----------|----------------|------------------|-----------------|
-| [EchoNet-Dynamic (Ouyang et al.) [1]](./papers/echonet_dynamic.pdf) | 0.89      | **4.10**       | 21.30            | 17.60           |
-| [EchoCoTr (Muhtaseb et al.) [2]](./papers/echocotr.pdf)             | 0.92      | 3.95           | –                | 19.61           |
-| [SimLVSeg-SI [3]](./papers/simlvseg.pdf)                            | 0.9331    | –              | 24.83            | 2.17            |
-| [**SimLVSeg-3D [3]**](./papers/simlvseg.pdf)                        | **0.9332**| –              | 18.83            | 1.13            |
-| [MU-Net [4]](./papers/mobile_unet.pdf)                              | 0.905     | 6.61           | 12.38            | 2.06            |
-| [MU-Net + MaskTrack [4]](./papers/mobile_unet.pdf)                 | 0.850     | 8.24           | –                | –               |
-| [Mobile U-Net (Muldoon et al.) [4]](./papers/mobile_unet.pdf)      | 0.90      | –              | 7.50             | 5.20            |
-| UNetR   | 0.90      | –              | 7.50             | 5.20            |
-| UNet   | 0.90      | –              | 7.50             | 5.20            |
-|-------------------------------------|-----------|----------------|------------------|-----------------|
-| **Ours (MobileNetV3 U-Net)**        | **0.9275**| **6.75**       | **6.15**         | **0.39**        |
+| **Model**                                     | **DSC ↑** | **LVEF MAE ↓** | **Params (M) ↓** | **FLOPs (G) ↓** |
+|----------------------------------------------|-----------|----------------|------------------|-----------------|
+| [EchoNet-Dynamic (Ouyang et al.) [1]](./papers/echonet_dynamic.pdf)     | 0.89      | **4.10**       | 21.30            | 17.60           |
+| [EchoCoTr (Muhtaseb et al.) [2]](./papers/echocotr.pdf)                 | 0.92      | 3.95           | –                | 19.61           |
+| [SimLVSeg-SI [3]](./papers/simlvseg.pdf)                                | 0.9331    | –              | 24.83            | 2.17            |
+| [**SimLVSeg-3D [3]**](./papers/simlvseg.pdf)                            | **0.9332**| –              | 18.83            | 1.13            |
+| [MU-Net [4]](./papers/mobile_unet.pdf)                                  | 0.905     | 6.61           | 12.38            | 2.06            |
+| [MU-Net + MaskTrack [4]](./papers/mobile_unet.pdf)                      | 0.850     | 8.24           | –                | –               |
+| [Mobile U-Net (Muldoon et al.) [4]](./papers/mobile_unet.pdf)          | 0.90      | –              | 7.50             | 5.20            |
+| UNet                                         | 0.9269    | 7.018          | 91.90            | 30.95           |
+| UNetR                                        | 0.9108    | 7.923          | 31.00            | 20.98           |
+| **Ours (MobileNetV3 U-Net)**                 | **0.9270**| **6.749**      | **6.15**         | **0.39**        |
+
 
 
 ---
@@ -129,7 +130,7 @@ echoframe_capstone/
 ---
 
 ## Data Preparation
-1. Download the **EchoNet-Dynamic** dataset.
+1. Download the [**EchoNet-Dynamic**](https://stanfordaimi.azurewebsites.net/datasets/834e1cd1-92f7-4268-9daa-d359198b310a) dataset.
 2. Extract into a folder named `data/` within the root directory.
 3. Ensure structure resembles:
     ```
@@ -137,33 +138,20 @@ echoframe_capstone/
     ├── EchoNet_Dynamic/
     │   ├── Videos/
     │   └── FileList.csv
+    │   └── VolumeTracings.csv
     ```
 
 ---
 
 ## Run Instructions
 
-### Training
-```bash
-python src/train.py --model model6 --epochs 30 --batch_size 8 --lr 0.001
-
+After data preparation, open `main.ipynb`, update the `data_path` variable as per your system, uncomment the training code, and run the entire notebook.
 
 ---
 
 ## Inference / Evaluation
 
-To evaluate the trained model on the test set, run:
-
-```bash
-python src/evaluate.py --model_path checkpoints/best_model.pth --mode test
-```
-
-## Results
-
-| Model              | Dice Score | MAE (EF) | RMSE (EF) |
-|--------------------|------------|----------|-----------|
-| Baseline UNet      | 0.785      | 6.4%     | 9.2%      |
-| MobileNetV3-UNet   | 0.842      | 4.8%     | 6.7%      |
+For evaluation, open `test.ipynb`, update the `data_path` variable accordingly, and run the notebook to evaluate the model on the test set.
 
 ## Acknowledgments
 
