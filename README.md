@@ -5,36 +5,69 @@
 
 ---
 
-![Segmentation Overview](./assets/sample_output.png)
+<div align="center">
+  <img src="./assets/sample_output.png" alt="Segmentation Overview" title="Segmentation Overview" height = "500" width="1000"/>
+</div>
+
 ## Overview
 EchoFrame aims to achieve precise **left ventricle segmentation** using one of the candidate models, enabling **accurate estimation of Left Ventricular Ejection Fraction (LVEF)** through End-Systolic Volume (ESV) and End-Diastolic Volume (EDV). The goal is to develop a lightweight, efficient, and scalable framework, offering a cost-effective, reliable solution for **cardiac function assessment in resource-constrained settings**. Further extending the application for **video segmentation** using the high-quality annotations from the current SOTA model called SimLVseg. This will enable us for processing of **volumetric heart signals**. 
 
 ---
 
 ## Project Framework
-![Experimental Setup](./assets/experimental_setup.png)
+
+<div align="center">
+  <img src="./assets/experimental_setup.png" alt="Experimental Setup" title="Experimental Setup" height="500" width="800"/>
+</div>
+
 
 The experimental setup involves a two-stage framework for cardiac function assessment using echocardiogram videos. In Stage 1, **MobileNetV3** is trained on annotated **ED and ES frames** from EchoNet Train Set 1, while **SimLVSeg** generates **dense annotations** for EchoNet Train Set 2 to fine-tune a **pretrained MobileNetV3** for full-frame segmentation. In Stage 2, these segmentations are used for **volume estimation** via geometric formulas to calculate **EDV and ESV**, enabling **LVEF estimation** and **heartbeat signal analysis** for accurate and efficient cardiac evaluation.
 
 ---
 ## Core Algorithm
 
-| Model Architecture                  | Specifics                                   |
-|-------------------------------------|---------------------------------------------|
-| ![](./assets/architecture.png)      | ![](./assets/model_specifics.png)           |
+
+### 🔹 Architecture Diagram
+
+<div align="center">
+<img src="./assets/architecture.png" alt="Architecture" title="Architecture" height="400" width="800"/>
+</div>
+
+### 🔹 Layer-wise Parameter Table
+
+| **Component**                      | **Type**                               | **Parameters**     |
+|-----------------------------------|----------------------------------------|--------------------|
+| **Encoder (MobileNetV3-Large)**   |                                        |                    |
+| Initial Conv + BN + Hardswish     | Conv2d block                           | 464                |
+| Inverted Residual Blocks (x16)    | Depthwise + SE + Pointwise             | ~5.86M             |
+| Squeeze-and-Excitation Units (x8) | AdaptiveAvgPool + FC layers            | Included above     |
+| Final Conv Layer                  | Conv2d-BN-Activation                    | 24,000             |
+| **Decoder (UNet-style)**          |                                        |                    |
+| Upsample Block 1                  | Upsample + Conv-BN-ReLU ×2             | 183,680            |
+| Upsample Block 2                  | Upsample + Conv-BN-ReLU ×2             | 8,672              |
+| Upsample Block 3                  | Upsample + Conv-BN-ReLU ×2             | 8,096              |
+| Upsample Block 4                  | Upsample + Conv-BN-ReLU ×2             | 6,944              |
+| Final Upsampling Layer            | Bilinear Upsample                      | 0                  |
+| Segmentation Head                 | 1×1 Conv                               | 17                 |
+|                                   | **Total Parameters**                   | **6,151,545**      |
+
+
+
 
 ---
 ## Training Results
 
-| Baseline 1           | Baseline 2           | Core Model           |
-|----------------------|----------------------|----------------------|
-| ![](./results/unet_performance.png)   | ![](./results/unetr_performance.png)   | ![](./results/mv3_performance.png)  |
+| **Model**               |           **Performance**                           |
+|------------------|--------------------------------------------|
+| **Baseline 1**   | <img src="./results/unet_performance.png" height="300" width="1000"/>  |
+| **Baseline 2**   | <img src="./results/unetr_performance.png" height="300" width="1000"/> |
+| **Core Model**   | <img src="./results/mv3_performance.png" height="300" width="1000"/>   |
+
+
 
 ---
 
-## Baseline Comparison
-
-## 📊 Model Comparison Table
+## Baseline Comparison & Results
 
 | **Model**                            | **DSC ↑** | **LVEF MAE ↓** | **Params (M) ↓** | **FLOPs (G) ↓** |
 |-------------------------------------|-----------|----------------|------------------|-----------------|
