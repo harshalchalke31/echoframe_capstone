@@ -5,13 +5,51 @@
 
 ---
 
+![Segmentation Overview](./assets/sample_output.png)
 ## Overview
-EchoFrame is a lightweight, interpretable pipeline for real-time estimation of Left Ventricular Ejection Fraction (LVEF) using echocardiogram videos. It leverages a MobileNetV3-based U-Net architecture to segment the left ventricle and applies Simpson’s method to calculate LVEF.
+EchoFrame aims to achieve precise **left ventricle segmentation** using one of the candidate models, enabling **accurate estimation of Left Ventricular Ejection Fraction (LVEF)** through End-Systolic Volume (ESV) and End-Diastolic Volume (EDV). The goal is to develop a lightweight, efficient, and scalable framework, offering a cost-effective, reliable solution for **cardiac function assessment in resource-constrained settings**. Further extending the application for **video segmentation** using the high-quality annotations from the current SOTA model called SimLVseg. This will enable us for processing of **volumetric heart signals**. 
 
 ---
 
 ## Project Framework
-A schematic showcasing the MobileNetV3-UNet architecture and the LVEF estimation process.
+![Experimental Setup](./assets/experimental_setup.png)
+
+The experimental setup involves a two-stage framework for cardiac function assessment using echocardiogram videos. In Stage 1, **MobileNetV3** is trained on annotated **ED and ES frames** from EchoNet Train Set 1, while **SimLVSeg** generates **dense annotations** for EchoNet Train Set 2 to fine-tune a **pretrained MobileNetV3** for full-frame segmentation. In Stage 2, these segmentations are used for **volume estimation** via geometric formulas to calculate **EDV and ESV**, enabling **LVEF estimation** and **heartbeat signal analysis** for accurate and efficient cardiac evaluation.
+
+---
+## Core Algorithm
+
+| Model Architecture                  | Specifics                                   |
+|-------------------------------------|---------------------------------------------|
+| ![](./assets/architecture.png)      | ![](./assets/model_specifics.png)           |
+
+---
+## Training Results
+
+| Baseline 1           | Baseline 2           | Core Model           |
+|----------------------|----------------------|----------------------|
+| ![](./results/unet_performance.png)   | ![](./results/unetr_performance.png)   | ![](./results/mv3_performance.png)  |
+
+---
+
+## Baseline Comparison
+
+## 📊 Model Comparison Table
+
+| **Model**                            | **DSC ↑** | **LVEF MAE ↓** | **Params (M) ↓** | **FLOPs (G) ↓** |
+|-------------------------------------|-----------|----------------|------------------|-----------------|
+| [EchoNet-Dynamic (Ouyang et al.) [1]](./papers/echonet_dynamic.pdf) | 0.89      | **4.10**       | 21.30            | 17.60           |
+| [EchoCoTr (Muhtaseb et al.) [2]](./papers/echocotr.pdf)             | 0.92      | 3.95           | –                | 19.61           |
+| [SimLVSeg-SI [3]](./papers/simlvseg.pdf)                            | 0.9331    | –              | 24.83            | 2.17            |
+| [**SimLVSeg-3D [3]**](./papers/simlvseg.pdf)                        | **0.9332**| –              | 18.83            | 1.13            |
+| [MU-Net [4]](./papers/mobile_unet.pdf)                              | 0.905     | 6.61           | 12.38            | 2.06            |
+| [MU-Net + MaskTrack [4]](./papers/mobile_unet.pdf)                 | 0.850     | 8.24           | –                | –               |
+| [Mobile U-Net (Muldoon et al.) [4]](./papers/mobile_unet.pdf)      | 0.90      | –              | 7.50             | 5.20            |
+| UNetR   | 0.90      | –              | 7.50             | 5.20            |
+| UNet   | 0.90      | –              | 7.50             | 5.20            |
+|-------------------------------------|-----------|----------------|------------------|-----------------|
+| **Ours (MobileNetV3 U-Net)**        | **0.9275**| **6.75**       | **6.15**         | **0.39**        |
+
 
 ---
 
@@ -44,6 +82,8 @@ echoframe_capstone/
 
 2. **Set up the Environment**
     ```bash
+    virtualenv echoframe
+    ./echoframe/Scripts/activate
     pip install -r requirements.txt
     ```
     Or use conda:
@@ -97,6 +137,16 @@ python src/evaluate.py --model_path checkpoints/best_model.pth --mode test
 - **Dataset:** [EchoNet-Dynamic](https://echonet.github.io/dynamic/) by Stanford Center for Artificial Intelligence in Medicine & Imaging (AIMI).
 - **Model Architectures:** Base U-Net and MobileNetV3 encoders adapted from publicly available open-source repositories cited within the source code.
 - **Benchmarking:** Special thanks to the [EchoNet GitHub repository](https://github.com/echonet/dynamic) for providing evaluation protocols and baseline benchmarks.
+
+## References
+
+[1] Ouyang, D., He, B., Ghorbani, A., et al. (2020). *Video-based AI for beat-to-beat assessment of cardiac function*. Nature, 580, 252–256. [`PDF`](./papers/echonet_dynamic.pdf)
+
+[2] Muhtaseb, R., & Yaqub, M. (2022). *EchoCoTr: Estimation of the left ventricular ejection fraction from spatiotemporal echocardiography*. In MICCAI. [`PDF`](./papers/echocotr.pdf)
+
+[3] Maani, F., Ukaye, A., Saadi, N., et al. (2023). *SimLVSeg: Simplifying Left Ventricular Segmentation in 2D+Time Echocardiograms*. arXiv:2310.00454. [`PDF`](./papers/simlvseg.pdf)
+
+[4] Muldoon, M., & Khan, N. (2023). *Lightweight and interpretable left ventricular ejection fraction estimation using mobile U-Net*. arXiv:2304.07951. [`PDF`](./papers/mobile_unet.pdf)
 
 ## License
 
