@@ -17,7 +17,7 @@ def train_UNet3D_weak_supervision(
     log_path='./logs/train_log3d.csv',
     model_path='./models/best_model_3d.pth',
     patience=50,
-    temporal_lambda=0.01  # Weight for temporal smoothness (you can tune this)
+    temporal_lambda=0.01  # Weight for temporal smoothness (needs tuning)
 ):
     """
     Trains a 3D UNet in a weakly supervised manner, with:
@@ -67,13 +67,12 @@ def train_UNet3D_weak_supervision(
             # 1) Compute segmentation loss for the center frame only:
             center_idx = images.shape[2] // 2
             pred_center = outputs[:, :, center_idx]  # [B, out_channels, H, W]
-            mask_center = masks                      # [B, 1,         H, W]
+            mask_center = masks                      # [B, 1,H, W]
 
             seg_loss = criterion(pred_center, mask_center)
 
             # 2) (Optional) Temporal regularization across frames
-            #    We'll use L1 difference between consecutive frames (logits).
-            #    You can adapt to e.g. F.mse_loss, or difference of predicted probabilities.
+            #    using L1 difference between consecutive frames (logits).
             if temporal_lambda > 0:
                 # shape [B, out_channels, T, H, W]
                 b, c, t, h, w = outputs.shape
@@ -97,9 +96,7 @@ def train_UNet3D_weak_supervision(
 
         train_loss /= total_train_samples
 
-        # -----------------------
         # Validation
-        # -----------------------
         model.eval()
         valid_loss = 0.0
         valid_dice = 0.0
@@ -115,10 +112,7 @@ def train_UNet3D_weak_supervision(
                 mask_center = masks
 
                 seg_loss = criterion(pred_center, mask_center)
-                # Usually we don't add temporal regularization for validation
-                # because we are mostly measuring segmentation at center frame.
-                # If you do want it, do the same L1 logic here.
-                loss_val = seg_loss  # + optional temporal reg if desired
+                loss_val = seg_loss
 
                 valid_loss += loss_val.item() * images.size(0)
                 total_valid_samples += images.size(0)

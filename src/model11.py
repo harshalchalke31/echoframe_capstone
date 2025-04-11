@@ -8,7 +8,6 @@ import torch.nn.functional as F
 def get_norm_3d(num_channels, norm_type="bn", num_groups=4):
     """
     Returns 3D normalization layer: either BatchNorm3d or GroupNorm, etc.
-    Modify as needed.
     """
     if norm_type == "bn":
         return nn.BatchNorm3d(num_channels)
@@ -264,7 +263,6 @@ class MobileNetV3UNet3D(nn.Module):
 
         # The channels at each skip stage (derived from standard config)
         # e.g. feats[1]->16, feats[3]->24, feats[5]->40, feats[7]->80, feats[9]->112, feats[11]->160
-        # If you customize the encoder, make sure to update these accordingly:
         self.skip_channels = {
             1: 16,
             3: 24,

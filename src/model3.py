@@ -81,14 +81,12 @@ class MobileNetV3UNet(nn.Module):
             in_channels = out_channels
         self.decoder_blocks = nn.ModuleList(decoder_blocks)
         
-        # final upsampling (if needed) and segmentation head (1x1 convolution).
+        # final upsampling and segmentation head (1x1 convolution).
         self.final_upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
         self.segmentation_head = nn.Conv2d(in_channels, num_classes, kernel_size=1)
 
     def _get_encoder_channels(self, input_size: tuple = (3, 224, 224)) -> list:
         """
-        Perform a dummy forward pass to get the channel dimensions of encoder features.
-        This is a common technique to automatically adapt to the backbone's architecture.
         """
         with torch.no_grad():
             dummy_input = torch.randn(1, *input_size)

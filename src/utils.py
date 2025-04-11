@@ -195,7 +195,6 @@ def simpsons_biplane(cnt, frame):
         idx_far, arr_far = farthest_point(np.flip(apex), pts)
         dist = arr_far[idx_far]
         if (len(pts) >= 2) and (dist >= 0.9 * annulus_diam):
-            # Good enough
             break
         width += 1
         if width > diag * 2:

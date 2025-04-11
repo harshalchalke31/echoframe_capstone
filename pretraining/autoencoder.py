@@ -49,5 +49,5 @@ if __name__=='__main__':
     x = torch.randn(2, 3, 16, 112, 112).cuda()
     out = model(x)
     print("Input shape:", x.shape)
-    print("Output shape:", out.shape)  # should match input
+    print("Output shape:", out.shape)
 

@@ -87,7 +87,7 @@ def ssim_score(pred, target):
 
 
 def temporal_consistency_loss(output, target):
-    # Δ = frame_t+1 - frame_t → compare temporal derivatives
+    # delta = frame_t+1 - frame_t → compare temporal derivatives
     delta_out = output[:, :, 1:] - output[:, :, :-1]
     delta_gt = target[:, :, 1:] - target[:, :, :-1]
     return F.mse_loss(delta_out, delta_gt)

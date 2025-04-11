@@ -90,7 +90,7 @@ class EchoMaskDataset(Dataset):
                  df,                
                  polygons_dict,     # from build_polygons_dict(...)
                  videos_path,       # path to .avi files
-                 transform=None,    # optional transform pipeline for (image, mask)
+                 transform=None,
                  resize=(112, 112),
                  all_traced_frames=True,
                  offset_frames_by_one=False):

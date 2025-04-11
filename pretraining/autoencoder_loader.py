@@ -91,7 +91,7 @@ class EchoNetDataset(VisionDataset):
 
 def preprocess_image(x):
     """Preprocessing logic to resize the image."""
-    return cv2.resize(x, (112, 112))  # Replace lambda with a named function
+    return cv2.resize(x, (112, 112))
 
 def get_echonet_dataloader(data_path, batch_size=4, n_frames=16, period=2, split="train", num_workers=4):
     dataset = EchoNetDataset(
@@ -99,7 +99,7 @@ def get_echonet_dataloader(data_path, batch_size=4, n_frames=16, period=2, split
         split=split,
         length=n_frames,
         period=period,
-        transform=preprocess_image  # Use the named function instead of lambda
+        transform=preprocess_image
     )
 
     loader = DataLoader(

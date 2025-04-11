@@ -2,9 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# ---------------------------------------------------------
+
 # Normalization helper: can switch easily to GroupNorm, etc.
-# ---------------------------------------------------------
 def get_norm_3d(num_channels, norm_type="bn", num_groups=4):
     """
     Returns 3D normalization layer: either BatchNorm3d or GroupNorm, etc.
@@ -18,9 +17,9 @@ def get_norm_3d(num_channels, norm_type="bn", num_groups=4):
         raise ValueError(f"Unknown norm_type={norm_type}")
 
 
-# ---------------------------------------------------------
+
 # 1) Squeeze-and-Excitation (3D) with 1x1x1 conv
-# ---------------------------------------------------------
+
 class SELayer3D(nn.Module):
     def __init__(self, channel, reduction=4):
         super().__init__()
@@ -41,9 +40,9 @@ class SELayer3D(nn.Module):
         return x * y
 
 
-# ---------------------------------------------------------
+
 # 2) Inverted Residual Block (3D) for MobileNetV3 encoder
-# ---------------------------------------------------------
+
 class InvertedResidual3D(nn.Module):
     def __init__(
         self,
@@ -106,9 +105,9 @@ class InvertedResidual3D(nn.Module):
             return self.conv(x)
 
 
-# ---------------------------------------------------------
+
 # 3) MobileNetV3-Large 3D Encoder
-# ---------------------------------------------------------
+
 class MobileNetV3Large3DEncoder(nn.Module):
     """
     Stages:
@@ -120,7 +119,7 @@ class MobileNetV3Large3DEncoder(nn.Module):
       feats[8] & feats[9]: 4th down => [112]
       feats[10] & feats[11]: final => [160]
 
-    We set skip_indices = [1, 3, 5, 7, 9].
+    set skip_indices = [1, 3, 5, 7, 9].
     The final output is feats[11].
     """
     def __init__(self, in_channels=3, norm_type="bn"):
@@ -208,9 +207,9 @@ class MobileNetV3Large3DEncoder(nn.Module):
         return feats
 
 
-# ---------------------------------------------------------
-# A small 3D residual block for deepening the decoder
-# ---------------------------------------------------------
+
+# A 3D residual block for the decoder
+
 class ResidualBlock3D(nn.Module):
     """
     A basic 3D residual block with two 3x3x3 conv layers.
@@ -245,9 +244,9 @@ class ResidualBlock3D(nn.Module):
         return out
 
 
-# ---------------------------------------------------------
-# 4) Deeper DecoderBlock3D with residual blocks
-# ---------------------------------------------------------
+
+# 4) DecoderBlock3D with residual blocks
+
 class DecoderBlock3D(nn.Module):
     def __init__(
         self,
@@ -305,9 +304,8 @@ class DecoderBlock3D(nn.Module):
         return x
 
 
-# ---------------------------------------------------------
-# 5) MobileNetV3-Large UNet 3D (Deepened Decoder)
-# ---------------------------------------------------------
+
+# 5) MobileNetV3-Large UNet 3D
 class MobileNetV3UNet3D(nn.Module):
     def __init__(
         self,
@@ -325,7 +323,7 @@ class MobileNetV3UNet3D(nn.Module):
         self.skip_ids = self.encoder.skip_indices  # [1,3,5,7,9]
         self.bottleneck_id = self.encoder.final_idx  # 11
 
-        # The channels at each skip stage (derived from standard config)
+        # The channels at each skip stage (derived from standard config of MobileNetV3)
         # e.g. feats[1]->16, feats[3]->24, feats[5]->40, feats[7]->80, feats[9]->112, feats[11]->160
         self.skip_channels = {
             1: 16,
@@ -336,7 +334,7 @@ class MobileNetV3UNet3D(nn.Module):
         }
         bottleneck_channels = 160
 
-        # Decoder blocks (deepened)
+        # Decoder blocks
         self.dec4 = DecoderBlock3D(
             in_c=bottleneck_channels,
             out_c=112,
@@ -419,29 +417,23 @@ class MobileNetV3UNet3D(nn.Module):
         return out
 
 
-# ---------------------------------------------------------
-# Example script
-# ---------------------------------------------------------
 if __name__ == "__main__":
-    # Example usage for segmentation with MC dropout
-    # Deeper decoder => num_res_blocks=3 for each stage, for instance
     model = MobileNetV3UNet3D(
         in_channels=3,
-        out_channels=2,      # e.g. 2-class segmentation
-        dropout=0.2,         # dropout for MC
-        norm_type="bn",      # or 'gn'
-        final_activation="softmax",  # or 'sigmoid' for binary
-        num_res_blocks=2     # increase this for an even deeper decoder
+        out_channels=2,      
+        dropout=0.2,         
+        norm_type="bn",      
+        final_activation="softmax", 
+        num_res_blocks=2     
     ).cuda()
 
     # Random temporal data [B, C, T, H, W]
     dummy_input = torch.randn(2, 3, 16, 112, 112).cuda()
 
-    model.train()  # train mode: BN updates, dropout active
+    model.train()
     out = model(dummy_input)
     print("Train mode output shape:", out.shape)
 
-    # Evaluate (but let's keep dropout active for MC inference if we want)
     model.eval()
     # Force dropout submodules to remain active for MC test
     for m in model.modules():

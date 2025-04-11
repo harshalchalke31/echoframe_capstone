@@ -9,6 +9,9 @@ import torch.nn.functional as F
 import imageio
 import torchvision.transforms as T
 import math
+import io
+from PIL import Image
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 def visualize_random_video_from_loader(loader, max_batches=5):
     """
@@ -122,13 +125,6 @@ def visualize_clip_with_overlay(model, test_loader, model_path, device='cuda', s
     plt.show()
 
 
-import io
-import imageio
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 def save_overlay_gif_from_loader(model, test_loader, model_path, save_path="output_clip.gif",
                                  batch_idx=0, sample_idx=0, device="cuda", fps=5):
