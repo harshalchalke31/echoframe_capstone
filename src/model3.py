@@ -114,18 +114,18 @@ class MobileNetV3UNet(nn.Module):
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = MobileNetV3UNet(num_classes=1).to(device)
-    dummy_input = torch.randn(1, 3, 256, 256).to(device)
+    dummy_input = torch.randn(1, 3, 112, 112).to(device)
     output = model(dummy_input)
     
     print(model)
-    summary(model, input_size=(3, 256, 256), device=str(device))
+    summary(model, input_size=(3, 112, 112), device=str(device))
     print("Output shape:", output.shape)
 
-    # model.eval()
+    model.eval()
 
-    # with torch.cuda.device(0):
-    #     macs, params = get_model_complexity_info(model, (3, 128, 128), as_strings=True,
-    #                                             print_per_layer_stat=False)
+    with torch.cuda.device(0):
+        macs, params = get_model_complexity_info(model, (3, 112, 112), as_strings=True,
+                                                print_per_layer_stat=False)
 
-    # print(f"MACs: {macs}")
-    # print(f"Params: {params}")
+    print(f"MACs: {macs}")
+    print(f"Params: {params}")

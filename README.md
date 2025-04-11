@@ -7,8 +7,14 @@
 ---
 
 <div align="center">
-  <img src="./assets/sample_output.png" alt="Segmentation Overview" title="Segmentation Overview" height = "500" width="1000"/>
+  <div style="display: flex; justify-content: center; gap: 20px;">
+    <img src="./assets/annotated_echocardiogram_1.png" alt="Static Output" title="Static Output" height="300" width="500"/>
+    <img src="./assets/annotated_echocardiogram_1.gif" alt="Segmentation GIF" title="Segmentation GIF" height="300" width="500"/>
+  </div>
+  <p><em>Figure 1: Segmented left ventricle outputs obtained from 3D MobileNetV3 after self-supervised pretraining using a vanilla autoencoder.</em></p>
 </div>
+
+
 
 ## Overview
 EchoFrame aims to achieve precise **left ventricle segmentation** using one of the candidate models, enabling **accurate estimation of Left Ventricular Ejection Fraction (LVEF)** through End-Systolic Volume (ESV) and End-Diastolic Volume (EDV). The goal is to develop a lightweight, efficient, and scalable framework, offering a cost-effective, reliable solution for **cardiac function assessment in resource-constrained settings**. Further extending the application for **video segmentation** using the high-quality annotations from the current SOTA model called SimLVseg. This will enable us for processing of **volumetric heart signals**. 
@@ -18,51 +24,67 @@ EchoFrame aims to achieve precise **left ventricle segmentation** using one of t
 ## Project Framework
 
 <div align="center">
-  <img src="./assets/experimental_setup.png" alt="Experimental Setup" title="Experimental Setup" height="500" width="800"/>
+  <img src="./assets/experimental_setup.png" alt="Experimental Setup" title="Experimental Setup" height="500" width="900"/>
+  <p><em>Figure 2: Two stage framework for training a 3D MobileNetV3 Unet from scratch, and pipeline for volume estimation.</em></p>
 </div>
 
 
-The experimental setup involves a two-stage framework for cardiac function assessment using echocardiogram videos. In Stage 1, **MobileNetV3** is trained on annotated **ED and ES frames** from EchoNet Train Set 1, while **SimLVSeg** generates **dense annotations** for EchoNet Train Set 2 to fine-tune a **pretrained MobileNetV3** for full-frame segmentation. In Stage 2, these segmentations are used for **volume estimation** via geometric formulas to calculate **EDV and ESV**, enabling **LVEF estimation** and **heartbeat signal analysis** for accurate and efficient cardiac evaluation.
+The experimental setup involves a two-stage framework for cardiac function assessment using echocardiogram videos. In Stage 1, Self-Supervised pretraining of **3D MobileNetV3 Encoder** to reconstruct echocardiograms in an Autoencoder setting. In Stage 2, this pretrained encoder is used in a weakly supervised setting (with annotations only at the center frame) to localize and segment LV regions by penalizing center frame incorporating temporal consistency; these segmentations are then used for **volume estimation** via Simpson's monoplane approximation to calculate **EDV and ESV**, enabling **LVEF estimation** and **heartbeat signal analysis** for accurate and efficient cardiac evaluation.
 
 ---
 ## Core Algorithm
 
 
-### 🔹 Architecture Diagram
+### 🔹 3D MobileNetV3 Encoder + UNet Decoder
 
 <div align="center">
-<img src="./assets/architecture.png" alt="Architecture" title="Architecture" height="400" width="800"/>
+  <img src="./assets/architecture.png" alt="Architecture" title="Architecture" height="400" width="800"/>
+  <p><em>Figure 3: The 2D MobileNetV3 + UNet decoder architecture, which served as the foundational inspiration for the proposed 3D MobileNetV3 encoder and UNet decoder design..</em></p>
 </div>
 
-### 🔹 Layer-wise Parameter Table
 
-| **Component**                      | **Type**                               | **Parameters**     |
-|-----------------------------------|----------------------------------------|--------------------|
-| **Encoder (MobileNetV3-Large)**   |                                        |                    |
-| Initial Conv + BN + Hardswish     | Conv2d block                           | 464                |
-| Inverted Residual Blocks (x16)    | Depthwise + SE + Pointwise             | ~5.86M             |
-| Squeeze-and-Excitation Units (x8) | AdaptiveAvgPool + FC layers            | Included above     |
-| Final Conv Layer                  | Conv2d-BN-Activation                    | 24,000             |
-| **Decoder (UNet-style)**          |                                        |                    |
-| Upsample Block 1                  | Upsample + Conv-BN-ReLU ×2             | 183,680            |
-| Upsample Block 2                  | Upsample + Conv-BN-ReLU ×2             | 8,672              |
-| Upsample Block 3                  | Upsample + Conv-BN-ReLU ×2             | 8,096              |
-| Upsample Block 4                  | Upsample + Conv-BN-ReLU ×2             | 6,944              |
-| Final Upsampling Layer            | Bilinear Upsample                      | 0                  |
-| Segmentation Head                 | 1×1 Conv                               | 17                 |
-|                                   | **Total Parameters**                   | **6,151,545**      |
+### Component-wise Summary of 3D MobileNetV3-UNet Architecture
+
+| **Component**                     | **Type**                              | **Parameters** |
+|----------------------------------|---------------------------------------|----------------|
+| **Encoder (MobileNetV3-Large 3D)** |                                       |                |
+| Initial Conv + BN + Hardswish    | Conv3d block                          | 1,296          |
+| Inverted Residual Blocks (x16+)  | Depthwise + SE + Pointwise            | ~5.5M          |
+| SE Units (x6+)                   | AdaptiveAvgPool + FC layers           | Included above |
+| Final Conv Layers                | Conv3d-BN-Activation                  | 230,400        |
+| **Decoder (UNet-style 3D)**       |                                       |                |
+| Decoder Block 1                  | ConvTranspose + Conv-BN-ReLU + Residual | 1,434,496   |
+| Decoder Block 2                  | ConvTranspose + Conv-BN-ReLU + Residual | 1,035,680   |
+| Decoder Block 3                  | ConvTranspose + Conv-BN-ReLU + Residual | 458,720     |
+| Decoder Block 4                  | ConvTranspose + Conv-BN-ReLU + Residual | 154,464     |
+| Decoder Block 5                  | ConvTranspose + Conv-BN-ReLU          | 15,442         |
+| Segmentation Head                | 1x1 Conv                              | 34             |
+| **Total Parameters**             |                                       | **5,706,786**  |
+
+---
+## Stage 1 - Self-Supervised Pretraining Results
+
+| **Mode**                     | **Loss Curves**                                              | **Test Results**                                      | **Reconstructed Frame**                                  |
+|-----------------------------|--------------------------------------------------------------|-------------------------------------------------------|-----------------------------------------------------------|
+| **Vanilla Autoencoder**     | <img src="./assets/st1_loss_1.png" height="300" width="500"/> | PSNR: 25.20 dB<br>SSIM: 0.7488<br>TDC: 0.003219       | <img src="./assets/st1_output_1.png" height="300" width="600"/> |
+| **Masked Autoencoder** (ratio = 0.75) | <img src="./assets/st1_loss_2.png" height="300" width="500"/> | PSNR: 23.05 dB<br>SSIM: 0.6389<br>TDC: 0.003286       | <img src="./assets/st1_output_2.png" height="300" width="600"/> |
+
+
 
 
 
 
 ---
-## Training Results
+## Stage 2 - Weakly-Supervised Training
 
+<!-- <img src="./results/unet_performance.png" height="300" width="1000"/> -->
+<!-- <img src="./results/unetr_performance.png" height="300" width="1000"/> -->
 | **Model**               |           **Performance**                           |
 |------------------|--------------------------------------------|
-| **Baseline 1**   | <img src="./results/unet_performance.png" height="300" width="1000"/>  |
-| **Baseline 2**   | <img src="./results/unetr_performance.png" height="300" width="1000"/> |
-| **Core Model**   | <img src="./results/mv3_performance.png" height="300" width="1000"/>   |
+| **2D MobileNetV3 UNet** (Baseline 3)   | <img src="./results/mv3_performance.png" height="300" width="1000"/>  |
+| **3D MobileNetV3 UNet 1** (pretrained - vanilla autoencoder)   | <img src="./assets/st2_loss_1.png" height="300" width="1000"/> |
+| **3D MobileNetV3 UNet** (pretrained - masked autoencoder)   |  **Model Running**  |
+| **3D MobileNetV3 UNet** (from Scratch)   |  **Model Running**  |
 
 
 
@@ -79,14 +101,16 @@ The experimental setup involves a two-stage framework for cardiac function asses
 | [MU-Net [4]](./papers/mobile_unet.pdf)                                  | 0.905     | 6.61           | 12.38            | 2.06            |
 | [MU-Net + MaskTrack [4]](./papers/mobile_unet.pdf)                      | 0.850     | 8.24           | –                | –               |
 | [Mobile U-Net (Muldoon et al.) [4]](./papers/mobile_unet.pdf)          | 0.90      | –              | 7.50             | 5.20            |
-| UNet                                         | 0.9269    | 7.018          | 91.90            | 30.95           |
-| UNetR                                        | 0.9108    | 7.923          | 31.00            | 20.98           |
-| **Ours (MobileNetV3 U-Net)**                 | **0.9270**| **6.749**      | **6.15**         | **0.39**        |
+| UNet (Baseline 1)                                        | 0.9269    | 7.018          | 91.90            | 30.95           |
+| UNetR (Baseline 2)                                       | 0.9108    | 7.923          | 31.00            | 20.98           |
+| 2D MobileNetV3 U-Net (Baseline 3)                 | 0.9270 | **6.749**      | 6.15         | **0.39**        |
+| **3D MobileNetV3 U-Net** (pretrained - vanilla autoencoder)                 | **0.9137** | --      | **5.70**         | 38.76        |
+| **3D MobileNetV3 U-Net** (pretrained - masked autoencoder)                 | -- | --      | **5.70**         | 38.76        |
+| **3D MobileNetV3 U-Net** (from scratch)                 | -- | --      | **5.70**         | 38.76        |
 
 
 
 ---
-
 ## Directory Structure
 ```bash
 echoframe_capstone/

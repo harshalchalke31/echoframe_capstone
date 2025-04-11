@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from torchsummary import summary
+from ptflops import get_model_complexity_info
 
 # Normalization helper: can switch easily to GroupNorm, etc.
 def get_norm_3d(num_channels, norm_type="bn", num_groups=4):
@@ -429,21 +430,25 @@ if __name__ == "__main__":
 
     # Random temporal data [B, C, T, H, W]
     dummy_input = torch.randn(2, 3, 16, 112, 112).cuda()
-
-    model.train()
-    out = model(dummy_input)
-    print("Train mode output shape:", out.shape)
+    summary(model=model,input_size=(3, 16, 112, 112),batch_size=4,device='cuda')
+    # model.train()
+    # out = model(dummy_input)
+    # print("Train mode output shape:", out.shape)
 
     model.eval()
     # Force dropout submodules to remain active for MC test
-    for m in model.modules():
-        if isinstance(m, nn.Dropout3d):
-            m.train()
-
+    # for m in model.modules():
+    #     if isinstance(m, nn.Dropout3d):
+    #         m.train()
+    with torch.cuda.device(0):
+        macs, params = get_model_complexity_info(model, (3,16, 112, 112), as_strings=True,
+                                                print_per_layer_stat=False)
+    print(f"MACs: {macs}")
+    print(f"Params: {params}")
     # Forward pass #1
-    out1 = model(dummy_input)
-    # Forward pass #2
-    out2 = model(dummy_input)
-    # out1 and out2 will differ due to dropout if p>0
+    # out1 = model(dummy_input)
+    # # Forward pass #2
+    # out2 = model(dummy_input)
+    # # out1 and out2 will differ due to dropout if p>0
 
-    print("Eval mode + MC dropout output shapes:", out1.shape, out2.shape)
+    # print("Eval mode + MC dropout output shapes:", out1.shape, out2.shape)
