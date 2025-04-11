@@ -1,6 +1,6 @@
 # EchoFrame: Lightweight and Accurate LVEF Estimation with Heartbeat Analysis
 **Author:** Harshal Chalke  
-**Course:** Capstone Project  
+**Course:** IDAI 780 Capstone, IMGS 789 Project  
 **Dataset:** [EchoNet-Dynamic by Stanford AIMI](https://stanfordaimi.azurewebsites.net/datasets/834e1cd1-92f7-4268-9daa-d359198b310a)
 
 
