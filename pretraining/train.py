@@ -4,30 +4,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
-from torch.nn import functional as F
-from kornia.metrics import ssim
 
-from .utils import generate_random_mask, MaskedMSELoss
+from .utils import generate_random_mask, MaskedMSELoss, psnr, temporal_consistency_loss,ssim_score
 
-
-def psnr(pred, target, max_val=1.0):
-    mse = F.mse_loss(pred, target)
-    return 20 * torch.log10(max_val / torch.sqrt(mse))
-
-
-def ssim_score(pred, target):
-    # Convert [B, C, T, H, W] → [B*T, C, H, W]
-    B, C, T, H, W = pred.shape
-    pred = pred.permute(0, 2, 1, 3, 4).reshape(B * T, C, H, W)
-    target = target.permute(0, 2, 1, 3, 4).reshape(B * T, C, H, W)
-    return ssim(pred, target, window_size=11).mean()
-
-
-def temporal_consistency_loss(output, target):
-    # Δ = frame_t+1 - frame_t → compare temporal derivatives
-    delta_out = output[:, :, 1:] - output[:, :, :-1]
-    delta_gt = target[:, :, 1:] - target[:, :, :-1]
-    return F.mse_loss(delta_out, delta_gt)
 
 
 def train_autoencoder_3d(
@@ -134,7 +113,7 @@ def train_autoencoder_3d(
               f"TDC: {avg_temporal:.6f} | Patience: {patience_counter}")
 
         if valid_loss < best_loss:
-            torch.save(model.state_dict(), model_path)
+            torch.save(model.encoder.state_dict(), model_path)
             best_loss = valid_loss
             patience_counter = 0
         else:

@@ -7,7 +7,9 @@ echoframe.egg-info/dependency_links.txt
 echoframe.egg-info/top_level.txt
 pretraining/__init__.py
 pretraining/autoencoder.py
-pretraining/echonet_loader.py
+pretraining/autoencoder_loader.py
+pretraining/train.py
+pretraining/utils.py
 src/__init__.py
 src/dataloader.py
 src/model1.py
@@ -17,3 +19,6 @@ src/model6.py
 src/model9.py
 src/train.py
 src/utils.py
+src_3d/__init__.py
+src_3d/data_loader.py
+src_3d/utils.py

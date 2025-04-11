@@ -7,5 +7,6 @@ setup(
     package_dir={
         "src": "src",  # Map 'src' as a package
         "pretraining": "pretraining",  # Map 'pretraining' as another package
+        "src_3d": "src_3d"
     },
 )
