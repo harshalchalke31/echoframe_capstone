@@ -4,9 +4,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
-from .utils import generate_random_mask, MaskedMSELoss
+from torch.nn import functional as F
 from kornia.metrics import ssim
-import torch.nn.functional as F
+
+from .utils import generate_random_mask, MaskedMSELoss
 
 
 def psnr(pred, target, max_val=1.0):
@@ -15,11 +16,18 @@ def psnr(pred, target, max_val=1.0):
 
 
 def ssim_score(pred, target):
-    # pred, target: [B, C, T, H, W] → Kornia expects 4D input
+    # Convert [B, C, T, H, W] → [B*T, C, H, W]
     B, C, T, H, W = pred.shape
     pred = pred.permute(0, 2, 1, 3, 4).reshape(B * T, C, H, W)
     target = target.permute(0, 2, 1, 3, 4).reshape(B * T, C, H, W)
     return ssim(pred, target, window_size=11).mean()
+
+
+def temporal_consistency_loss(output, target):
+    # Δ = frame_t+1 - frame_t → compare temporal derivatives
+    delta_out = output[:, :, 1:] - output[:, :, :-1]
+    delta_gt = target[:, :, 1:] - target[:, :, :-1]
+    return F.mse_loss(delta_out, delta_gt)
 
 
 def train_autoencoder_3d(
@@ -34,12 +42,10 @@ def train_autoencoder_3d(
     patience: int = 30,
     use_masked_loss: bool = False,
     mask_ratio: float = 0.75,
+    tdc_weight: float = 0.1
 ):
-    if use_masked_loss:
-        criterion = MaskedMSELoss()
-    else:
-        criterion = nn.MSELoss()
-
+    # Loss selection
+    criterion = MaskedMSELoss() if use_masked_loss else nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-7)
 
@@ -52,7 +58,7 @@ def train_autoencoder_3d(
 
     with open(log_path, mode='w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(["Epoch", "Train Loss", "Valid Loss", "Valid PSNR", "Valid SSIM"])
+        writer.writerow(["Epoch", "Train Loss", "Valid Loss", "Valid PSNR", "Valid SSIM", "Temporal Consistency"])
 
     for epoch in range(num_epochs):
         model.train()
@@ -64,20 +70,23 @@ def train_autoencoder_3d(
 
             if use_masked_loss:
                 mask = generate_random_mask(images.shape, mask_ratio=mask_ratio, device=device)
-                masked_images = images * mask
-                outputs = model(masked_images)
-                loss = criterion(outputs, images, mask)
+                inputs = images * mask
+                outputs = model(inputs)
+                recon_loss = criterion(outputs, images, mask)
             else:
                 outputs = model(images)
-                loss = criterion(outputs, images)
+                recon_loss = criterion(outputs, images)
+
+            tdc_loss = temporal_consistency_loss(outputs, images)
+            loss = recon_loss + tdc_weight * tdc_loss
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            batch_size_curr = images.size(0)
-            train_loss += loss.item() * batch_size_curr
-            total_train_samples += batch_size_curr
+            batch_size = images.size(0)
+            train_loss += loss.item() * batch_size
+            total_train_samples += batch_size
 
         train_loss /= total_train_samples
 
@@ -85,7 +94,7 @@ def train_autoencoder_3d(
         model.eval()
         valid_loss = 0.0
         total_valid_samples = 0
-        total_psnr, total_ssim = 0.0, 0.0
+        total_psnr, total_ssim, total_temporal = 0.0, 0.0, 0.0
 
         with torch.no_grad():
             for images in tqdm(valid_loader, desc=f"Epoch {epoch+1} [Validation]", leave=False):
@@ -93,29 +102,36 @@ def train_autoencoder_3d(
 
                 if use_masked_loss:
                     mask = generate_random_mask(images.shape, mask_ratio=mask_ratio, device=device)
-                    masked_images = images * mask
-                    outputs = model(masked_images)
+                    inputs = images * mask
+                    outputs = model(inputs)
                     loss = criterion(outputs, images, mask)
                 else:
                     outputs = model(images)
                     loss = criterion(outputs, images)
 
-                batch_size_curr = images.size(0)
-                valid_loss += loss.item() * batch_size_curr
-                total_valid_samples += batch_size_curr
+                batch_size = images.size(0)
+                valid_loss += loss.item() * batch_size
+                total_valid_samples += batch_size
 
-                # Metric computation (only on unmasked for fairness if masked)
-                total_psnr += psnr(outputs, images).item() * batch_size_curr
-                total_ssim += ssim_score(outputs, images).item() * batch_size_curr
+                total_psnr += psnr(outputs, images).item() * batch_size
+                total_ssim += ssim_score(outputs, images).item() * batch_size
+                total_temporal += temporal_consistency_loss(outputs, images).item() * batch_size
 
         valid_loss /= total_valid_samples
         avg_psnr = total_psnr / total_valid_samples
         avg_ssim = total_ssim / total_valid_samples
+        avg_temporal = total_temporal / total_valid_samples
         scheduler.step()
 
         with open(log_path, mode='a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([epoch + 1, train_loss, valid_loss, avg_psnr, avg_ssim])
+            writer.writerow([epoch + 1, train_loss, valid_loss, avg_psnr, avg_ssim, avg_temporal])
+
+        print(f"Epoch {epoch+1}/{num_epochs} | "
+              f"Train Loss: {train_loss:.6f} | "
+              f"Valid Loss: {valid_loss:.6f} | "
+              f"PSNR: {avg_psnr:.2f} dB | SSIM: {avg_ssim:.4f} | "
+              f"TDC: {avg_temporal:.6f} | Patience: {patience_counter}")
 
         if valid_loss < best_loss:
             torch.save(model.state_dict(), model_path)
@@ -123,12 +139,6 @@ def train_autoencoder_3d(
             patience_counter = 0
         else:
             patience_counter += 1
-
-        print(f"Epoch {epoch+1}/{num_epochs} | "
-              f"Train Loss: {train_loss:.6f} | "
-              f"Valid Loss: {valid_loss:.6f} | "
-              f"PSNR: {avg_psnr:.2f} dB | SSIM: {avg_ssim:.4f} | "
-              f"Patience: {patience_counter}")
 
         if patience_counter >= patience:
             print("Early Stopping Triggered!")
