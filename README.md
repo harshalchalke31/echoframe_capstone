@@ -8,8 +8,8 @@
 
 <div align="center">
   <div style="display: flex; justify-content: center; gap: 20px;">
-    <img src="./assets/annotated_echocardiogram_1.png" alt="Static Output" title="Static Output" height="300" width="500"/>
-    <img src="./assets/annotated_echocardiogram_1.gif" alt="Segmentation GIF" title="Segmentation GIF" height="300" width="500"/>
+    <img src="./assets/annotated_echocardiogram_1.png" alt="Static Output" title="Static Output" height="200" width="400"/>
+    <img src="./assets/annotated_echocardiogram_1.gif" alt="Segmentation GIF" title="Segmentation GIF" height="200" width="400"/>
   </div>
   <p><em>Figure 1: Segmented left ventricle outputs obtained from 3D MobileNetV3 after self-supervised pretraining using a vanilla autoencoder.</em></p>
 </div>
@@ -24,7 +24,7 @@ EchoFrame aims to achieve precise **left ventricle segmentation** using one of t
 ## Project Framework
 
 <div align="center">
-  <img src="./assets/experimental_setup.png" alt="Experimental Setup" title="Experimental Setup" height="500" width="900"/>
+  <img src="./assets/experimental_setup.png" alt="Experimental Setup" title="Experimental Setup" height="250" width="500"/>
   <p><em>Figure 2: Two stage framework for training a 3D MobileNetV3 Unet from scratch, and pipeline for volume estimation.</em></p>
 </div>
 
@@ -38,7 +38,7 @@ The experimental setup involves a two-stage framework for cardiac function asses
 ### 🔹 3D MobileNetV3 Encoder + UNet Decoder
 
 <div align="center">
-  <img src="./assets/architecture.png" alt="Architecture" title="Architecture" height="400" width="800"/>
+  <img src="./assets/architecture.png" alt="Architecture" title="Architecture" height="250" width="500"/>
   <p><em>Figure 3: The 2D MobileNetV3 + UNet decoder architecture, which served as the foundational inspiration for the proposed 3D MobileNetV3 encoder and UNet decoder design..</em></p>
 </div>
 
@@ -66,8 +66,8 @@ The experimental setup involves a two-stage framework for cardiac function asses
 
 | **Mode**                     | **Loss Curves**                                              | **Test Results**                                      | **Reconstructed Frame**                                  |
 |-----------------------------|--------------------------------------------------------------|-------------------------------------------------------|-----------------------------------------------------------|
-| **Vanilla Autoencoder**     | <img src="./assets/st1_loss_1.png" height="300" width="500"/> | PSNR: 25.20 dB<br>SSIM: 0.7488<br>TDC: 0.003219       | <img src="./assets/st1_output_1.png" height="300" width="600"/> |
-| **Masked Autoencoder** (ratio = 0.75) | <img src="./assets/st1_loss_2.png" height="300" width="500"/> | PSNR: 23.05 dB<br>SSIM: 0.6389<br>TDC: 0.003286       | <img src="./assets/st1_output_2.png" height="300" width="600"/> |
+| **Vanilla Autoencoder**     | <img src="./assets/st1_loss_1.png" height="100" width="300"/> | PSNR: 25.20 dB<br>SSIM: 0.7488<br>TDC: 0.003219       | <img src="./assets/st1_output_1.png" height="100" width="300"/> |
+| **Masked Autoencoder** (ratio = 0.75) | <img src="./assets/st1_loss_2.png" height="100" width="300"/> | PSNR: 23.05 dB<br>SSIM: 0.6389<br>TDC: 0.003286       | <img src="./assets/st1_output_2.png" height="100" width="300"/> |
 
 
 
@@ -81,8 +81,8 @@ The experimental setup involves a two-stage framework for cardiac function asses
 <!-- <img src="./results/unetr_performance.png" height="300" width="1000"/> -->
 | **Model**               |           **Performance**                           |
 |------------------|--------------------------------------------|
-| **2D MobileNetV3 UNet** (Baseline 3)   | <img src="./results/mv3_performance.png" height="300" width="1000"/>  |
-| **3D MobileNetV3 UNet 1** (pretrained - vanilla autoencoder)   | <img src="./assets/st2_loss_1.png" height="300" width="1000"/> |
+| **2D MobileNetV3 UNet** (Baseline 3)   | <img src="./results/mv3_performance.png" height="200" width="500"/>  |
+| **3D MobileNetV3 UNet 1** (pretrained - vanilla autoencoder)   | <img src="./assets/st2_loss_1.png" height="200" width="500"/> |
 | **3D MobileNetV3 UNet** (pretrained - masked autoencoder)   |  **Model Running**  |
 | **3D MobileNetV3 UNet** (from Scratch)   |  **Model Running**  |
 
