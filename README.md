@@ -9,7 +9,7 @@
 <div align="center">
   <div style="display: flex; justify-content: center; gap: 20px;">
     <img src="./assets/annotated_echocardiogram_1.png" alt="Static Output" title="Static Output" height="200" width="400"/>
-    <img src="./assets/annotated_echocardiogram_1.gif" alt="Segmentation GIF" title="Segmentation GIF" height="200" width="400"/>
+    <img src="./assets/annotated_echocardiogram_1.2.gif" alt="Segmentation GIF" title="Segmentation GIF" height="200" width="400"/>
   </div>
   <p><em>Figure 1: Segmented left ventricle outputs obtained from 3D MobileNetV3 after self-supervised pretraining using a vanilla autoencoder.</em></p>
 </div>
