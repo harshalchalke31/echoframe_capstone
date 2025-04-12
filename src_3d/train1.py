@@ -56,7 +56,7 @@ def train_UNet3D_weak_supervision(
         train_loss = 0.0
         total_train_samples = 0
 
-        for images, masks in tqdm(train_loader, desc=f"Epoch {epoch+1} [Training]", leave=False):
+        for images, masks,_ in tqdm(train_loader, desc=f"Epoch {epoch+1} [Training]", leave=False):
             """
             images: shape [B, C, T, H, W]
             masks:  shape [B, 1, H, W]    (only center frame is labeled)

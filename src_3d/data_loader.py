@@ -128,5 +128,5 @@ class EchoNetDataset(VisionDataset):
         video_clip = torch.from_numpy(video_clip).permute(3, 0, 1, 2).float() / 255.0  # [C, D, H, W]
         mask = torch.from_numpy(mask).unsqueeze(0).float()  # [1, H, W]
 
-        return video_clip, mask
+        return video_clip, mask, filename
     

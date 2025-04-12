@@ -21,4 +21,7 @@ src/train.py
 src/utils.py
 src_3d/__init__.py
 src_3d/data_loader.py
+src_3d/model1.py
+src_3d/train.py
+src_3d/train1.py
 src_3d/utils.py
