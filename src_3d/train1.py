@@ -17,24 +17,9 @@ def train_UNet3D_weak_supervision(
     log_path='./logs/train_log3d.csv',
     model_path='./models/best_model_3d.pth',
     patience=50,
-    temporal_lambda=0.01  # Weight for temporal smoothness (needs tuning)
+    temporal_lambda=0.01
 ):
-    """
-    Trains a 3D UNet in a weakly supervised manner, with:
-      - Loss computed only on the annotated center frame (partial supervision).
-      - Optional temporal regularization to penalize abrupt changes across adjacent frames.
-    Args:
-        model: 3D UNet model
-        train_loader: DataLoader for training
-        valid_loader: DataLoader for validation
-        device: "cpu" or "cuda"
-        num_epochs: total epochs
-        lr: learning rate
-        log_path: CSV log file path
-        model_path: saved model path
-        patience: early stopping patience
-        temporal_lambda: weight for the temporal regularization term
-    """
+
 
     criterion = BCEDiceLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
@@ -64,15 +49,13 @@ def train_UNet3D_weak_supervision(
             images, masks = images.to(device), masks.to(device)
             outputs = model(images)      # shape [B, out_channels, T, H, W]
 
-            # 1) Compute segmentation loss for the center frame only:
+            
             center_idx = images.shape[2] // 2
             pred_center = outputs[:, :, center_idx]  # [B, out_channels, H, W]
             mask_center = masks                      # [B, 1,H, W]
 
             seg_loss = criterion(pred_center, mask_center)
 
-            # 2) (Optional) Temporal regularization across frames
-            #    using L1 difference between consecutive frames (logits).
             if temporal_lambda > 0:
                 # shape [B, out_channels, T, H, W]
                 b, c, t, h, w = outputs.shape
